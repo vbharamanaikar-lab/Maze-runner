@@ -1,0 +1,198 @@
+<html>
+<style>
+  body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+  .container { max-width: 500px; margin: 0 auto; text-align: center; }
+  h1 { color: #5dade2; font-size: 28px; margin: 0 0 10px 0; }
+  canvas { border: 4px solid #5dade2; border-radius: 8px; display: block; margin: 20px auto; cursor: none; background: white; }
+  .controls { margin: 15px 0; font-size: 18px; }
+  .info { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; color: #333; }
+  .emoji { font-size: 24px; }
+  button { background: #4ecdc4; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; margin: 5px; }
+  button:hover { background: #45b8b0; transform: scale(1.05); }
+  .stats { font-size: 16px; color: #666; margin: 10px 0; }
+</style>
+
+<div class="container">
+  <h1>🎮 Maze Adventure</h1>
+  <div class="info">
+    <p><span class="emoji">😊</span> Use arrow keys or WASD to move</p>
+    <p>Find the <span class="emoji">⭐</span> to win!</p>
+  </div>
+  <canvas id="mazeCanvas" width="500" height="500"></canvas>
+  <div class="stats">
+    Moves: <span id="moves">0</span>
+  </div>
+  <button onclick="resetGame()">Play Again</button>
+</div>
+
+<script>
+const canvas = document.getElementById('mazeCanvas');
+const ctx = canvas.getContext('2d');
+const movesDisplay = document.getElementById('moves');
+
+const CELL_SIZE = 50;
+const ROWS = 10;
+const COLS = 10;
+const COLORS = {
+  wall: '#5dade2',
+  path: '#fff3e0',
+  player: '#4ecdc4',
+  goal: '#ffd700'
+};
+
+let playerX = 1;
+let playerY = 1;
+let goalX = 8;
+let goalY = 8;
+let moves = 0;
+let won = false;
+
+// Create a simple maze
+const maze = [
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,1,0,0,0,0,0,1],
+  [1,0,1,1,0,1,1,1,0,1],
+  [1,0,0,0,0,0,0,1,0,1],
+  [1,1,1,0,1,1,0,1,0,1],
+  [1,0,0,0,0,1,0,0,0,1],
+  [1,0,1,1,0,1,1,1,1,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,1,1,1,1,1,1,1,1,1]
+];
+
+function drawMaze() {
+  // Draw background
+  ctx.fillStyle = '#f5f5f5';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw maze cells
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (maze[y][x] === 1) {
+        // Wall
+        ctx.fillStyle = COLORS.wall;
+        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      } else {
+        // Path
+        ctx.fillStyle = COLORS.path;
+        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      }
+      
+      // Draw border
+      ctx.strokeStyle = '#ddd';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+    }
+  }
+
+  // Draw goal (star)
+  drawStar(goalX * CELL_SIZE + CELL_SIZE/2, goalY * CELL_SIZE + CELL_SIZE/2, 15, COLORS.goal);
+
+  // Draw player (circle)
+  ctx.fillStyle = COLORS.player;
+  ctx.beginPath();
+  ctx.arc(playerX * CELL_SIZE + CELL_SIZE/2, playerY * CELL_SIZE + CELL_SIZE/2, 15, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw smile
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(playerX * CELL_SIZE + CELL_SIZE/2 - 5, playerY * CELL_SIZE + CELL_SIZE/2 - 3, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(playerX * CELL_SIZE + CELL_SIZE/2 + 5, playerY * CELL_SIZE + CELL_SIZE/2 - 3, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(playerX * CELL_SIZE + CELL_SIZE/2, playerY * CELL_SIZE + CELL_SIZE/2 + 2, 3, 0, Math.PI);
+  ctx.stroke();
+}
+
+function drawStar(x, y, size, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+    const nextX = x + size * Math.cos(angle);
+    const nextY = y + size * Math.sin(angle);
+    if (i === 0) ctx.moveTo(nextX, nextY);
+    else ctx.lineTo(nextX, nextY);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+function movePlayer(dx, dy) {
+  if (won) return;
+
+  const newX = playerX + dx;
+  const newY = playerY + dy;
+
+  // Check if move is valid
+  if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS && maze[newY][newX] === 0) {
+    playerX = newX;
+    playerY = newY;
+    moves++;
+    movesDisplay.textContent = moves;
+
+    // Check if reached goal
+    if (playerX === goalX && playerY === goalY) {
+      won = true;
+      setTimeout(() => alert(`🎉 You won! Moves: ${moves}`), 100);
+    }
+  }
+}
+
+function resetGame() {
+  playerX = 1;
+  playerY = 1;
+  moves = 0;
+  won = false;
+  movesDisplay.textContent = moves;
+  draw();
+}
+
+function draw() {
+  drawMaze();
+}
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') movePlayer(0, -1);
+  if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') movePlayer(0, 1);
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') movePlayer(-1, 0);
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') movePlayer(1, 0);
+  draw();
+});
+
+// Mobile touch controls
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+
+canvas.addEventListener('touchend', (e) => {
+  const touchEndX = e.changedTouches[0].clientX;
+  const touchEndY = e.changedTouches[0].clientY;
+  
+  const diffX = touchEndX - touchStartX;
+  const diffY = touchEndY - touchStartY;
+  
+  if (Math.abs(diffX) > Math.abs(diffY)) {
+    if (diffX > 0) movePlayer(1, 0);  // Right
+    else movePlayer(-1, 0);           // Left
+  } else {
+    if (diffY > 0) movePlayer(0, 1);  // Down
+    else movePlayer(0, -1);           // Up
+  }
+  draw();
+});
+
+// Initial draw
+draw();
+</script>
+</html>
