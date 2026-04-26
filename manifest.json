@@ -1,6 +1,7 @@
 {
-  "short_name": "Maze Runner",
-  "name": "Maze game for kids",
+  "short_name": "Pikachu Maze",
+  "name": "Pikachu Maze Adventure",
+  "description": "A fun 10-level maze game for kids featuring Pikachu",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/2454/2454282.png",
@@ -9,8 +10,9 @@
     }
   ],
   "start_url": "index.html",
-  "background_color": "#f4f7f6",
+  "background_color": "#87ceeb",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "/",
-  "theme_color": "#2563eb"
+  "theme_color": "#2e7d32"
 }
